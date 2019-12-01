@@ -2,7 +2,7 @@
 THIS IS A MEMORY MODULE ON THE SREVER WHICH ACTS LIKE MEMORY OF FILE SYSTEM. ALL THE OPERATIONS REGARDING THE FILE SYSTEM OPERATES IN 
 THIS MODULE. THE MODULE HAS POINTER TO DISK AND HAS EXACT SAME LAYOUT AS UNIX TYPE FILE SYSTEM.
 '''  
-import config, DiskLayout
+import config, DiskLayout, hashlib
 
 
 #POINTER TO DISK
@@ -48,7 +48,23 @@ class Operations():
 		elif block_number >= sblock.INODE_BLOCKS_OFFSET and block_number < sblock.DATA_BLOCKS_OFFSET:
 			return sblock.ADDR_INODE_BLOCKS[block_number - sblock.INODE_BLOCKS_OFFSET].block
 		elif block_number >= sblock.DATA_BLOCKS_OFFSET and block_number < sblock.TOTAL_NO_OF_BLOCKS:
-			return sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block
+			#load the below into a variable. cutt off the last 16 bytes and perform checksum. Check to see if 
+			#checksum matches. Then return the data if it does. If it does not match then perform parity to recreate it and send that data to the 
+			#client and write it back to the block. 
+			checksumOriginal = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[sblock.BLOCK_SIZE:sblock.BLOCK_SIZE+16-1]
+			#print("MADE IT1")
+			datastr = (str)(sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[0:sblock.BLOCK_SIZE-1])
+			data = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[0:sblock.BLOCK_SIZE-1]
+			#print("MADE IT2")
+			ChecksumNew = hashlib.md5(datastr).digest()
+			#print("MADE IT3")
+			decay = False
+			for i in range(len(checksumOriginal)):
+				#print(checksumOriginal[i],ChecksumNew[i])
+				if(checksumOriginal[i] != ChecksumNew[i]):
+					print("Memory: Block data decayed!")
+					decay = True
+			return (data,decay)
 		else: print("Memory: Block index out of range or Wrong input!")
 		return -1
 
@@ -73,6 +89,12 @@ class Operations():
 	def update_data_block(self, block_number, block_data):		
 		b = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block
 		for i in range(0, len(block_data)): b[i] = block_data[i]
+		#inpliment checksum for the block_data, write to b[i+sblock.BLOCK_SIZE]
+		Checksum_ascii = hashlib.md5((str)(b[0:sblock.BLOCK_SIZE-1])).digest() 
+		#print(Checksum_ascii, len(Checksum_ascii))
+		for i in range(len(Checksum_ascii)):
+		    b[i+sblock.BLOCK_SIZE] = Checksum_ascii[i]
+		    #print(i, (Checksum_ascii[i]))
 		#print("Memory: Data Copy Completes")
 	
 	

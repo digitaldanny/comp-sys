@@ -39,8 +39,8 @@ def get_data_block(block_number):
         print('get_data_block')
         print('+-----'*10)
 	passVal = pickle.loads(block_number)
-	retVal  = filesystem.get_data_block(passVal)
-	retVal  = pickle.dumps((retVal,state))
+	(retVal,decay)  = filesystem.get_data_block(passVal)
+	retVal  = pickle.dumps((retVal,state,decay))
 	return retVal
 
 def get_valid_data_block():	

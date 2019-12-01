@@ -67,21 +67,31 @@ class client_stub():
             p = self.proxy[serverNum]
             rx = p.get_data_block(serialMessage)
             deserialized = pickle.loads(rx)
+	    #if(deserialized[1] == False):
+		#todo: read from the other servers and use xor to remake the data. if the server is still alive then write data back to the destroyed block
+	    if(deserialized[2] == True):
+		#data has decayed
+		#fail the read
+		print "ERROR (get_data_block): Server data decay failure.."
+		return -1
             return deserialized[0]
         except Exception:
             print "ERROR (get_data_block): Server failure.."
             return -1
     
     def get_valid_data_block(self):
-	print("get_valid_data_block")
-	p = self.proxy[self.distribute_load]
-	rx = p.get_valid_data_block()
-        (blockNum,state) = pickle.loads(rx)
-	print(self.distribute_load)
 	
         try:
             p = self.proxy[self.distribute_load]
             rx = p.get_valid_data_block()
+            (blockNum,state) = pickle.loads(rx)
+	    if(state == False):
+		if self.distribute_load < N:
+                    self.distribute_load += 1 
+                else:
+                    self.distribute_load = 0
+		p = self.proxy[self.distribute_load]
+                rx = p.get_valid_data_block()
             (blockNum,state) = pickle.loads(rx)
             
             # map physical block number to virtual block number before returning
@@ -104,10 +114,6 @@ class client_stub():
             return -1 
     
     def free_data_block(self, virtual_block_number):
-        (serverNum,physicalBlock) = self.__translate_virtual_to_physical_block(virtual_block_number)
-        serialMessage = pickle.dumps(physicalBlock)
-        p = self.proxy[serverNum]
-	print(serverNum,physicalBlock,virtual_block_number)
 	try:
 	    (serverNum,physicalBlock) = self.__translate_virtual_to_physical_block(virtual_block_number)
             serialMessage = pickle.dumps(physicalBlock)
@@ -143,6 +149,7 @@ class client_stub():
 		p = self.proxy[i]
                 rx = p.inode_number_to_inode(serialMessage)
                 deserialized = pickle.loads(rx)
+		#todo: add ability to see block failure. if block failure then copy all inodes in block to the block that failed. 
 		if(deserialized[1] == True): break
             return deserialized[0]
         except Exception:
@@ -157,6 +164,7 @@ class client_stub():
                 p = self.proxy[i]
                 rx = p.update_inode_table(serialIn1, serialIn2)
             deserialized = pickle.loads(rx)
+	    #todo: add ability to see block failure. if block failure then copy all inodes in block to the block that failed. 
             return deserialized[0]
         except Exception:
             print "ERROR (update_inode_table): Server failure.."

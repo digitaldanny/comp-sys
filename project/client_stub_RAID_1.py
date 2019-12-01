@@ -27,7 +27,6 @@ class client_stub():
 
     # example provided for initialize
     def Initialize(self):
-	print("client_stub: Initialize()")
         try:
             for i in range(N*2):
                 self.proxy[i].Initialize()
@@ -69,6 +68,11 @@ class client_stub():
 		p = self.proxy[serverNum*2 + i]
                 rx = p.get_data_block(serialMessage)
                 deserialized = pickle.loads(rx)
+		if(deserialized[2] == True):
+		    #data has decayed
+		    #fail the read
+		    print "ERROR (get_data_block): Server data decay failure.."
+		    return -1
 		if(deserialized[1] == True): break
             return deserialized[0]
         except Exception:

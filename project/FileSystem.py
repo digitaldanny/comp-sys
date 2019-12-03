@@ -98,7 +98,7 @@ def main():
     fs = FileSystemOperations()
     
     while True:        
-        try:
+        #try:
             # split the user's response string by delimiters (white space)
             response = raw_input('$ ').split()
             cmd = response[0]
@@ -157,23 +157,26 @@ def main():
                 filename    = '/file.txt'
                 msg         = 'Hi this is a test'
                 offset      = 0
-                
+                print("MKDIRS")
                 fs.mkdir(dir1)
                 fs.mkdir(dir1 + dir2)
+		print("Create")
                 fs.create(dir1 + dir2 + filename)
+		print("WRITE")
                 fs.write(dir1 + dir2 + filename, msg, offset)
+		print("READ")
                 fs.read(dir1 + dir2 + filename, offset, 17)
                 
             else:
                 location = response[1]
                 fs.rm(location)
             
-        except Exception as err:
-            print("Command (" + str(cmd) + ") failed..")
-            print("ERROR MESSAGE BELOW:")
-            print("++++++++++++++"*5)
-            print(err.message)
-            print("++++++++++++++"*5)
+        #except Exception as err:
+            #print("Command (" + str(cmd) + ") failed..")
+            #print("ERROR MESSAGE BELOW:")
+            #print("++++++++++++++"*5)
+            #print(err.message)
+            #print("++++++++++++++"*5)
 #
 '''
 SUMMARY: testbench

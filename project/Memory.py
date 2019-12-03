@@ -59,11 +59,18 @@ class Operations():
 			ChecksumNew = hashlib.md5(datastr).digest()
 			#print("MADE IT3")
 			decay = False
+			
+			#Check if checksum is all null
+			for j in range(len(checksumOriginal)):
+				if(checksumOriginal[j] == '\x00'): return (data,decay)
+			
+			#compare new checksum and saved checksum
 			for i in range(len(checksumOriginal)):
 				#print(checksumOriginal[i],ChecksumNew[i])
 				if(checksumOriginal[i] != ChecksumNew[i]):
 					print("Memory: Block data decayed!")
 					decay = True
+			
 			return (data,decay)
 		else: print("Memory: Block index out of range or Wrong input!")
 		return -1

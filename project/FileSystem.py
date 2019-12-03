@@ -66,8 +66,14 @@ class FileSystemOperations():
 
 
     #CHECK STATUS
-    def status(self):
-        print(MemoryInterface.status())
+    def status(self, server):
+	print("++++++++++++++"*5)
+        print("Status for Server " + str(server))
+        print("++++++++++++++"*5)
+        print(MemoryInterface.status(server))
+        
+    def kill_all(self):
+        MemoryInterface.kill_all()
 
 def printDivider():
     print("+====="*10 + "+")
@@ -96,9 +102,9 @@ def main():
             # split the user's response string by delimiters (white space)
             response = raw_input('$ ').split()
             cmd = response[0]
-        
             if cmd == EXIT:
-                # EXIT: Terminate program.
+                # EXIT: Terminate program and all the connected servers.
+                fs.kill_all()
                 break
             
             elif cmd == MKDIR:
@@ -130,13 +136,13 @@ def main():
             elif cmd == WRITE:
                 # WRITE: Write a string (packed between quotations)
                 filename = response[1]
-                msg = response[2]
-                offset = int(response[3])
-                fs.write('/A/B/file.txt', msg, offset)
+                msg = ' '.join(response[2:-1])
+                offset = int(response[-1])
+                fs.write(filename, msg, offset)
                 
             elif cmd == STATUS:
                 # STATUS:
-                fs.status()
+                fs.status(int(response[1]))
                 
             elif cmd == RM:
                 # RM: Remove a file or directory.
@@ -156,15 +162,19 @@ def main():
                 fs.mkdir(dir1 + dir2)
                 fs.create(dir1 + dir2 + filename)
                 fs.write(dir1 + dir2 + filename, msg, offset)
-		fs.read(dir1 + dir2 + filename, offset, 17)
+                fs.read(dir1 + dir2 + filename, offset, 17)
                 
             else:
                 location = response[1]
                 fs.rm(location)
             
-        except Exception:
+        except Exception as err:
             print("Command (" + str(cmd) + ") failed..")
-
+            print("ERROR MESSAGE BELOW:")
+            print("++++++++++++++"*5)
+            print(err.message)
+            print("++++++++++++++"*5)
+#
 '''
 SUMMARY: testbench
 This function is the testbench ran on the HW3/4 file system.
@@ -261,7 +271,6 @@ if __name__ == '__main__':
     elif(RAID == 1):
         MemoryInterface.client_stub = client_stub_RAID_1.client_stub()
 	print("MODE: RAID 1")
-    print(RAID)
     if mode == 0:   main()
     elif mode == 1: testbench()
 

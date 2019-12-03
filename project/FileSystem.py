@@ -66,8 +66,11 @@ class FileSystemOperations():
 
 
     #CHECK STATUS
-    def status(self):
-        print(MemoryInterface.status())
+    def status(self, server):
+	print("++++++++++++++"*5)
+        print("Status for Server " + str(server))
+        print("++++++++++++++"*5)
+        print(MemoryInterface.status(server))
         
     def kill_all(self):
         MemoryInterface.kill_all()
@@ -95,7 +98,7 @@ def main():
     fs = FileSystemOperations()
     
     while True:        
-        try:
+        #try:
             # split the user's response string by delimiters (white space)
             response = raw_input('$ ').split()
             cmd = response[0]
@@ -133,13 +136,13 @@ def main():
             elif cmd == WRITE:
                 # WRITE: Write a string (packed between quotations)
                 filename = response[1]
-                msg = ' '.join(response[2:-2])
+                msg = ' '.join(response[2:-1])
                 offset = int(response[-1])
                 fs.write(filename, msg, offset)
                 
             elif cmd == STATUS:
                 # STATUS:
-                fs.status()
+                fs.status(int(response[1]))
                 
             elif cmd == RM:
                 # RM: Remove a file or directory.
@@ -165,13 +168,13 @@ def main():
                 location = response[1]
                 fs.rm(location)
             
-        except Exception as err:
-            print("Command (" + str(cmd) + ") failed..")
-            print("ERROR MESSAGE BELOW:")
-            print("++++++++++++++"*5)
-            print(err.message)
-            print("++++++++++++++"*5)
-
+        #except Exception as err:
+            #print("Command (" + str(cmd) + ") failed..")
+            #print("ERROR MESSAGE BELOW:")
+            #print("++++++++++++++"*5)
+            #print(err.message)
+            #print("++++++++++++++"*5)
+#
 '''
 SUMMARY: testbench
 This function is the testbench ran on the HW3/4 file system.
@@ -268,7 +271,6 @@ if __name__ == '__main__':
     elif(RAID == 1):
         MemoryInterface.client_stub = client_stub_RAID_1.client_stub()
 	print("MODE: RAID 1")
-    print(RAID)
     if mode == 0:   main()
     elif mode == 1: testbench()
 

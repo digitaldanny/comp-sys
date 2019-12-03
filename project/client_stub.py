@@ -131,9 +131,9 @@ class client_stub():
             serialMessage = pickle.dumps(physicalBlock)
             p = self.proxy[serverNum]
             rx = p.get_data_block(serialMessage)
-            (data, state) = pickle.loads(rx)       
+            (data, state, decay) = pickle.loads(rx)       
             # check if the data is valid, or if it has to be reconstructed before returning..
-            if state == True:
+            if ((state == True) and (decay == False)):
                 # data is good..
                 return data
             else:
@@ -172,10 +172,10 @@ class client_stub():
             		(tempData, state) = pickle.loads(temprx)
 			xorData = self.__xor(tempData,xorData)
 		passfail = True
-		for k in range(len(xorData)):
-			if(xorData[k] != data[k]): passfail = False
-		if(passfail): 	print("DATA RECONSTRUCTION SUCCESS!!!")
-		else:		print("DATA RECONSTRUCTION FAILED!!!")
+		#for k in range(len(xorData)):
+			#if(xorData[k] != data[k]): passfail = False
+		#if(passfail): 	print("DATA RECONSTRUCTION SUCCESS!!!")
+		#else:		print("DATA RECONSTRUCTION FAILED!!!")
 
 		return xorData
 		#if
@@ -202,7 +202,6 @@ class client_stub():
                     originalBlockData = self.__xor(originalBlockData, data)
                 '''    
                 return data
-				
         except Exception:
             print "ERROR (get_data_block): Server failure.."
             return -1
@@ -221,8 +220,8 @@ class client_stub():
 		serialMessage = pickle.dumps(physical_parity_block)
 		p = self.proxy[serverNumParity]
 		rx = p.get_data_block(serialMessage)
-		(data, state) = pickle.loads(rx)
-		if(state == False):
+		(data, stat, decay) = pickle.loads(rx)
+		if((state == False) or (decay == False)):
 			# data is bad.. reconstruct the block using all other blocks
 		        print("Server " + str(serverNumParity) + " failure detected.. reconstructing parity data")
 
@@ -250,10 +249,10 @@ class client_stub():
 		    		(tempData, state) = pickle.loads(temprx)
 				parityData = self.__xor(tempData,parityData)
 			passfail = True
-			for k in range(len(parityData)):
-				if(parityData[k] != data[k]): passfail = False
-			if(passfail): 	print("PARITY RECONSTRUCTION SUCCESS!!!")
-			else:		print("PARITY RECONSTRUCTION FAILED!!!")
+			#for k in range(len(parityData)):
+				#if(parityData[k] != data[k]): passfail = False
+			#if(passfail): 	print("PARITY RECONSTRUCTION SUCCESS!!!")
+			#else:		print("PARITY RECONSTRUCTION FAILED!!!")
 			return parityData
 
 		return data
@@ -267,14 +266,12 @@ class client_stub():
     the pointer will wrap back to 0.
     '''
     def get_valid_data_block(self):
-        if(self.block_claim_dir != self.block_claim_dir_old): self.data_blk_ptr = 0
 	try:
 	    if(self.block_claim_dir != self.block_claim_dir_old): self.data_blk_ptr = 0
             # Retrieve the physical block
             p = self.proxy[self.data_blk_ptr]
             rx = p.get_valid_data_block()
             (blockNum,state) = pickle.loads(rx)
-                      
             # map physical block number to virtual block number before returning
             # to the client.
             serverNum = self.data_blk_ptr
@@ -306,7 +303,6 @@ class client_stub():
     update the parity block.
     '''
     def free_data_block(self, virtual_block_number):
-		
         try:
             # read back the current parity block contents (FIRST READ)
             (serverNumData, pBlockData) = self.__translate_virtual_to_physical_block(virtual_block_number) # physical block address for the data block
@@ -401,6 +397,7 @@ class client_stub():
 		p = self.proxy[i]
                 rx = p.inode_number_to_inode(serialMessage)
                 deserialized = pickle.loads(rx)
+		#todo: add ability to see block failure. if block failure then copy all inodes in block to the block that failed. 
 		if(deserialized[1] == True): break
             return deserialized[0]
         except Exception:
@@ -415,6 +412,7 @@ class client_stub():
                 p = self.proxy[i]
                 rx = p.update_inode_table(serialIn1, serialIn2)
             deserialized = pickle.loads(rx)
+	    #todo: add ability to see block failure. if block failure then copy all inodes in block to the block that failed. 
             return deserialized[0]
         except Exception:
             print "ERROR (update_inode_table): Server failure.."

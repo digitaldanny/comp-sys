@@ -39,6 +39,7 @@ class client_stub():
 
         # claim the first NUM_BLOCKS/N virtual blocks to use as parity blocks
         self.block_claim_dir = PREV
+	self.block_claim_dir_old = PREV
         self.num_parity_blocks = int(math.ceil(config.TOTAL_NO_OF_BLOCKS))
 
         # if the number of parity blocks is not a multiple of N, continue incrementing
@@ -76,6 +77,7 @@ class client_stub():
         
             # switch block claim direction
             self.block_claim_dir = NEXT
+	    
 
             # assuming the server has not crashed yet, the next block will be
             # one higher than the last claimed parity block. This should be a
@@ -124,7 +126,7 @@ class client_stub():
     has a failure by reconstructing the data using the blocks from other servers.
     '''
     def get_data_block(self, virtual_block_number):
-        #try:
+        try:
             (serverNum,physicalBlock) = self.__translate_virtual_to_physical_block(virtual_block_number)
             serialMessage = pickle.dumps(physicalBlock)
             p = self.proxy[serverNum]
@@ -201,9 +203,9 @@ class client_stub():
                 '''    
                 return data
 				
-        #except Exception:
-            #print "ERROR (get_data_block): Server failure.."
-            #return -1
+        except Exception:
+            print "ERROR (get_data_block): Server failure.."
+            return -1
 
     '''
     SUMMARY: get_parity_block
@@ -214,47 +216,50 @@ class client_stub():
     has a failure by reconstructing the parity using the blocks from other servers.
     '''
     def get_parity_block(self, serverNumParity, physical_parity_block):
-	#read all data blocks
-	serialMessage = pickle.dumps(physical_parity_block)
-        p = self.proxy[serverNumParity]
-        rx = p.get_data_block(serialMessage)
-        (data, state) = pickle.loads(rx)
-	if(state == False):
-		# data is bad.. reconstruct the block using all other blocks
-                print("Server " + str(serverNumParity) + " failure detected.. reconstructing parity data")
+	try:
+		#read all data blocks
+		serialMessage = pickle.dumps(physical_parity_block)
+		p = self.proxy[serverNumParity]
+		rx = p.get_data_block(serialMessage)
+		(data, state) = pickle.loads(rx)
+		if(state == False):
+			# data is bad.. reconstruct the block using all other blocks
+		        print("Server " + str(serverNumParity) + " failure detected.. reconstructing parity data")
 
-		serverNumList = [None for i in range(N-1)]
-                pBlockNumList = [None for i in range(N-1)]
-		parityNum = N-1-serverNumParity	#0-3 for repetition
+			serverNumList = [None for i in range(N-1)]
+		        pBlockNumList = [None for i in range(N-1)]
+			parityNum = N-1-serverNumParity	#0-3 for repetition
 
-		#find the rows which data falls on and server associated with it
-		listCount = 0
-            	for r in range(N-1): 
-			for s in range(N):
-				if(self.offset_table[r][s] == parityNum):
-					pBlockNumList[listCount] = int(r + 3*(math.floor((physical_parity_block-12)/N)) + self.first_data_block_num)
-					serverNumList[listCount] = s
-					listCount += 1
+			#find the rows which data falls on and server associated with it
+			listCount = 0
+		    	for r in range(N-1): 
+				for s in range(N):
+					if(self.offset_table[r][s] == parityNum):
+						pBlockNumList[listCount] = int(r + 3*(math.floor((physical_parity_block-12)/N)) + self.first_data_block_num)
+						serverNumList[listCount] = s
+						listCount += 1
 
-		#xor data from server and block numbers
-		parityData = ['\x00' for i in range(config.BLOCK_SIZE)]
-		for j in range(N-1):
-			print("Fetching Block " + str(pBlockNumList[j]) + " from server " + str(serverNumList[j]))
-			#read from each block and server
-			tempSerialMessage = pickle.dumps(pBlockNumList[j])
-            		tempP = self.proxy[serverNumList[j]]
-            		temprx = tempP.get_data_block(tempSerialMessage)
-            		(tempData, state) = pickle.loads(temprx)
-			parityData = self.__xor(tempData,parityData)
-		passfail = True
-		for k in range(len(parityData)):
-			if(parityData[k] != data[k]): passfail = False
-		if(passfail): 	print("PARITY RECONSTRUCTION SUCCESS!!!")
-		else:		print("PARITY RECONSTRUCTION FAILED!!!")
-		return parityData
+			#xor data from server and block numbers
+			parityData = ['\x00' for i in range(config.BLOCK_SIZE)]
+			for j in range(N-1):
+				print("Fetching Block " + str(pBlockNumList[j]) + " from server " + str(serverNumList[j]))
+				#read from each block and server
+				tempSerialMessage = pickle.dumps(pBlockNumList[j])
+		    		tempP = self.proxy[serverNumList[j]]
+		    		temprx = tempP.get_data_block(tempSerialMessage)
+		    		(tempData, state) = pickle.loads(temprx)
+				parityData = self.__xor(tempData,parityData)
+			passfail = True
+			for k in range(len(parityData)):
+				if(parityData[k] != data[k]): passfail = False
+			if(passfail): 	print("PARITY RECONSTRUCTION SUCCESS!!!")
+			else:		print("PARITY RECONSTRUCTION FAILED!!!")
+			return parityData
 
-	return data
-
+		return data
+	except Exception:
+            print "ERROR (get_parity_block): Server failure.."
+            return -1
     '''
     SUMMARY: get_valid_data_block
     Return the next available virtual block number by incrementing the target
@@ -262,7 +267,9 @@ class client_stub():
     the pointer will wrap back to 0.
     '''
     def get_valid_data_block(self):
-        try:
+        if(self.block_claim_dir != self.block_claim_dir_old): self.data_blk_ptr = 0
+	try:
+	    if(self.block_claim_dir != self.block_claim_dir_old): self.data_blk_ptr = 0
             # Retrieve the physical block
             p = self.proxy[self.data_blk_ptr]
             rx = p.get_valid_data_block()
@@ -283,7 +290,7 @@ class client_stub():
             else:
                     # server pattern: 3, 2, 1, 0,.. 3, 2, 1, 0
                     self.data_blk_ptr = self.__prev(self.data_blk_ptr)
-            
+            self.block_claim_dir_old = self.block_claim_dir
             return virtual_block_number
 			
         except Exception:
@@ -346,7 +353,7 @@ class client_stub():
     slides (slide 66 - Parity in RAID 4,5)
     '''
     def update_data_block(self, virtual_block_number, block_data):
-        #try:
+        try:
             # read back the current data block contents (1.FIRST READ)
             (serverNumData, pBlockData) = self.__translate_virtual_to_physical_block(virtual_block_number)
             proxyData = self.proxy[serverNumData]				# find server 
@@ -379,9 +386,9 @@ class client_stub():
             deserialized = pickle.loads(rx)
             return deserialized[0]
 			
-        #except Exception:
-            #print "ERROR (update_data_block): Server failure.."
-            #return -1 
+        except Exception:
+            print "ERROR (update_data_block): Server failure.."
+            return -1 
     
     # +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
     #                            INODE FUNCTIONS

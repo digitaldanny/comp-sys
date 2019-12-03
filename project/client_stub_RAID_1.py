@@ -44,14 +44,10 @@ class client_stub():
     serialize all requests, send to the server, and deserialize responses. If the
     server fails at some point, these functions will return -1.
     '''
-    def status(self):
+    def status(self, server):
         try:
             rx = ''
-            for i in range(N*2):
-                #rx += "+-----------------------------------------+"
-                #rx += "PORT NUM: " + str(port + i)
-                #rx += "+-----------------------------------------+"
-                rx += self.proxy[i].status()
+            rx = self.proxy[server].status()
             return pickle.loads(rx)
         except Exception:
             print "ERROR (status): Server failure.."

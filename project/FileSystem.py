@@ -98,7 +98,7 @@ def main():
     fs = FileSystemOperations()
     
     while True:        
-        #try:
+        try:
             # split the user's response string by delimiters (white space)
             response = raw_input('$ ').split()
             cmd = response[0]
@@ -171,12 +171,12 @@ def main():
                 location = response[1]
                 fs.rm(location)
             
-        #except Exception as err:
-            #print("Command (" + str(cmd) + ") failed..")
-            #print("ERROR MESSAGE BELOW:")
-            #print("++++++++++++++"*5)
-            #print(err.message)
-            #print("++++++++++++++"*5)
+        except Exception as err:
+            print("Command (" + str(cmd) + ") failed..")
+            print("ERROR MESSAGE BELOW:")
+            print("++++++++++++++"*5)
+            print(err.message)
+            print("++++++++++++++"*5)
 #
 '''
 SUMMARY: testbench

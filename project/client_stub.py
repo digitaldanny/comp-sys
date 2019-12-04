@@ -126,7 +126,7 @@ class client_stub():
     has a failure by reconstructing the data using the blocks from other servers.
     '''
     def get_data_block(self, virtual_block_number):
-        #try:
+        try:
             (serverNum,physicalBlock) = self.__translate_virtual_to_physical_block(virtual_block_number)
 	    print("Fetching Block " + str(physicalBlock) + " from server " + str(serverNum))
             serialMessage = pickle.dumps(physicalBlock)
@@ -209,9 +209,9 @@ class client_stub():
                     originalBlockData = self.__xor(originalBlockData, data)
                 '''    
                 return data
-        #except Exception:
-            #print "ERROR (get_data_block): Server failure.."
-            #return -1
+        except Exception:
+            print "ERROR (get_data_block): Server failure.."
+            return -1
 
     '''
     SUMMARY: get_parity_block
@@ -222,7 +222,7 @@ class client_stub():
     has a failure by reconstructing the parity using the blocks from other servers.
     '''
     def get_parity_block(self, serverNumParity, physical_parity_block):
-	#try:
+	try:
 		#read all data blocks
 		print("Fetching Parity Block " + str(physical_parity_block) + " from server " + str(serverNumParity))
 		serialMessage = pickle.dumps(physical_parity_block)
@@ -272,9 +272,9 @@ class client_stub():
 			return parityData
 
 		return data
-	#except Exception:
-            #print "ERROR (get_parity_block): Server failure.."
-            #return -1
+	except Exception:
+            print "ERROR (get_parity_block): Server failure.."
+            return -1
     '''
     SUMMARY: get_valid_data_block
     Return the next available virtual block number by incrementing the target

@@ -29,23 +29,23 @@ for i in range(num_servers) :
 while True:
     choice = int(raw_input("Enter 1 to corrupt server, enter 2 to corrupt block on server..."))
     serverNum = int(raw_input("Select Server to Corrupt..."))
-    #try :
-    if(choice == 1):
-            retVal =  proxy[serverNum].corruptData()
-            print(serverNum)
-            print(pickle.loads(retVal))
-    if(choice == 2):
-	    blockNum = int(raw_input("Select Block to Corrupt..."))
-	    serialMessage = pickle.dumps(blockNum)
-	    retVal =  proxy[serverNum].corruptDataBlock(serialMessage)
-	    
-        
-    #except Exception as err :
-        #print('Connection error.. closing all servers.')
-        #for i in range(num_servers):
-            #print("Killing server on port " + str(portNum + i))
-            #try:
-                #proxy[i].kill()
-            #except:
-                #pass
-        #break
+    try :
+	    if(choice == 1):
+		    retVal =  proxy[serverNum].corruptData()
+		    print(serverNum)
+		    print(pickle.loads(retVal))
+	    if(choice == 2):
+		    blockNum = int(raw_input("Select Block to Corrupt..."))
+		    serialMessage = pickle.dumps(blockNum)
+		    retVal =  proxy[serverNum].corruptDataBlock(serialMessage)
+		    
+		
+    except Exception as err :
+        print('Connection error.. closing all servers.')
+        for i in range(num_servers):
+            print("Killing server on port " + str(portNum + i))
+            try:
+                proxy[i].kill()
+            except:
+                pass
+        break

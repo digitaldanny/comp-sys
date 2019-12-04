@@ -51,7 +51,7 @@ class Operations():
 			#load the below into a variable. cutt off the last 16 bytes and perform checksum. Check to see if 
 			#checksum matches. Then return the data if it does. If it does not match then perform parity to recreate it and send that data to the 
 			#client and write it back to the block. 
-			checksumOriginal = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[sblock.BLOCK_SIZE:sblock.BLOCK_SIZE+16-1]
+			checksumOriginal = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[sblock.BLOCK_SIZE:sblock.BLOCK_SIZE+16]
 			#print("MADE IT1")
 			datastr = (str)(sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[0:sblock.BLOCK_SIZE-1])
 			data = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block[0:sblock.BLOCK_SIZE-1]
@@ -61,16 +61,21 @@ class Operations():
 			decay = False
 			
 			#Check if checksum is all null
+			nullCheckSum = True
 			for j in range(len(checksumOriginal)):
-				if(checksumOriginal[j] == '\x00'): return (data,decay)
-			
+				if(checksumOriginal[j] != '\x00'): nullCheckSum = False
+			if(nullCheckSum == True):
+				return (data,decay)
+			print("Comparing Checksums in Block: " + str(block_number))
 			#compare new checksum and saved checksum
+			count = 0
 			for i in range(len(checksumOriginal)):
 				#print(checksumOriginal[i],ChecksumNew[i])
 				if(checksumOriginal[i] != ChecksumNew[i]):
-					print("Memory: Block data decayed!")
+					#print("Memory: Block data decayed!")
 					decay = True
-			
+					count += 1
+			if((decay == True) and (count == 1)): print("Memory: Block data decayed!")
 			return (data,decay)
 		else: print("Memory: Block index out of range or Wrong input!")
 		return -1
@@ -93,7 +98,8 @@ class Operations():
 
 
 	#WRITES TO THE DATA BLOCK
-	def update_data_block(self, block_number, block_data):		
+	def update_data_block(self, block_number, block_data):	
+		print("block_number" + str(block_number))	
 		b = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block
 		for i in range(0, len(block_data)): b[i] = block_data[i]
 		#inpliment checksum for the block_data, write to b[i+sblock.BLOCK_SIZE]
@@ -114,7 +120,16 @@ class Operations():
 	def inode_number_to_inode(self, inode_number):
 		return sblock.ADDR_INODE_BLOCKS[inode_number / sblock.INODES_PER_BLOCK].block[inode_number % sblock.INODES_PER_BLOCK]
 
-	
+	#CORRUPTS THE DATA BLOCK
+	def corrupt_data_block(self, block_number):	
+		#print("block_number" + str(block_number))	
+		b = sblock.ADDR_DATA_BLOCKS[block_number - sblock.DATA_BLOCKS_OFFSET].block
+		print("b[sblock.BLOCK_SIZE+15]: " + str(b[sblock.BLOCK_SIZE+15]))
+		b[sblock.BLOCK_SIZE+15] = chr(ord(b[sblock.BLOCK_SIZE+15])^ord('\x01'))	
+		#flips bit in the last part of checksum. Throws checksum failure back to client when accessing this block
+		print("b[sblock.BLOCK_SIZE+15]: " + str(b[sblock.BLOCK_SIZE+15]))
+		#print("here2")
+
 	#SHOWS THE STATUS OF DISK LAYOUT IN MEMORY
 	def status(self):
 		counter = 1

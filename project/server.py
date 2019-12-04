@@ -107,6 +107,17 @@ def corruptData():
 	retVal = pickle.dumps((retVal,state))
 	return retVal
 
+def corruptDataBlock(dataBlock):
+	passVal = pickle.loads(dataBlock)
+	print('+-----'*10)
+        print('corruptDatablock'+str(passVal))
+        print('+-----'*10)
+	retVal = filesystem.corrupt_data_block(passVal)
+	print("Data Corrupted!")
+	retVal = 'Data Corrupted in server ' + str(portNumber)
+	retVal = pickle.dumps((retVal,state))
+	return retVal
+
 def kill():
         print('+-----'*10)
         print('kill')
@@ -121,6 +132,7 @@ server = SimpleXMLRPCServer(("localhost",portNumber))
 print ("Listening on port " + str(portNumber) +   "...")
 
 server.register_function(corruptData, 			"corruptData")
+server.register_function(corruptDataBlock, 		"corruptDataBlock")
 server.register_function(configure, 		   	"configure")
 server.register_function(Initialize, 		   	"Initialize")
 server.register_function(addr_inode_table, 	   	"addr_inode_table")
